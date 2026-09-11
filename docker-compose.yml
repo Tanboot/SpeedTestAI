@@ -7,7 +7,7 @@ services:
     environment:
     - TZ=Asia/Bangkok
     ports:
-      - "8000:8000"
+      - "8080:8080"
     env_file:
       - .env
     volumes:
@@ -23,7 +23,7 @@ services:
     ports:
       - "8501:8501"
     environment:
-      - BACKEND_URL=http://fastapi-backend:8000
+      - BACKEND_URL=http://fastapi-backend:8080
     depends_on:
       - fastapi-backend
 # ประกาศ Named Volumes ให้ Docker สร้างและจัดการพื้นที่ให้
