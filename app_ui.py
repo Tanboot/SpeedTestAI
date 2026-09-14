@@ -45,7 +45,7 @@ if st.button("ทดสอบ"):
     
     with st.spinner("AI กำลังสร้าง Script, Review และสั่งรัน K6..."):
         try:
-            response = requests.post("https://speedtestai-git-349863046910.asia-southeast1.run.app", json=payload, timeout=120)
+            response = requests.post("https://speedtestai-git-349863046910.asia-southeast1.run.app/run-test", json=payload, timeout=120)
             if response.status_code == 200:
                 st.success("ทดสอบเรียบร้อย!")
                 st.json(response.json())
