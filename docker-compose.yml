@@ -23,7 +23,7 @@ services:
     ports:
       - "8501:8501"
     environment:
-      - BACKEND_URL=http://fastapi-backend:8080
+      - BACKEND_URL=https://speedtestai-git-349863046910.asia-southeast1.run.app/run-test
     depends_on:
       - fastapi-backend
 # ประกาศ Named Volumes ให้ Docker สร้างและจัดการพื้นที่ให้
