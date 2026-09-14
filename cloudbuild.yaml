@@ -1,5 +1,5 @@
 steps:
-  # 1. Build Docker image สำหรับ Frontend
+  # 1. Build Docker image โดยระบุ Dockerfile.frontend ชัดเจน
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/speedtest-ui', '-f', 'Dockerfile.frontend', '.']
 
