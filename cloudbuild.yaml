@@ -1,0 +1,11 @@
+steps:
+  # 1. Build Docker image สำหรับ Frontend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/speedtest-ui', '-f', 'Dockerfile.frontend', '.']
+
+  # 2. Push Image ขึ้น Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/speedtest-ui']
+
+images:
+  - 'gcr.io/$PROJECT_ID/speedtest-ui'
