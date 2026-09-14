@@ -1,20 +1,19 @@
-# app.py (Streamlit UI)
+# app_ui.py
 import streamlit as st
 import requests
 import os
-import requests
 
-BACKEND_URL = os.getenv("BACKEND_URL", "https://speedtestai-git-349863046910.asia-southeast1.run.app")
+# ดึงค่า Base URL และตัด / ท้ายสุดออกหากมี
+BACKEND_URL = os.getenv("BACKEND_URL", "https://speedtestai-git-349863046910.asia-southeast1.run.app").rstrip("/")
 
 st.set_page_config(
-    page_title="AI Performance Test",  # <--- เปลี่ยนชื่อ Title ที่ต้องการตรงนี้
-    page_icon="⚡",                      # <--- เปลี่ยนไอคอนบนแท็บ (ใส่ Emoji หรือ path รูปภาพได้)
+    page_title="AI Performance Test",
+    page_icon="⚡",
 )
 st.title("⚡ AI-Powered Performance Test")
 
 url = st.text_input("Target URL", "https://jsonplaceholder.typicode.com/posts/1")
 
-# เปลี่ยนเป็นตัวเลือก Executor
 executor = st.selectbox(
     "Choose k6 Executor",
     [
@@ -25,12 +24,9 @@ executor = st.selectbox(
     ]
 )
 
-# สกัดเอาชื่อ Executor หลักไปใช้งาน (เช่น shared-iterations)
 executor_type = executor.split(" ")[0]
-
 vus = st.number_input("Virtual Users (VUs)", min_value=1, value=2)
 
-# แสดงช่อง Input ให้เหมาะสมตาม Executor ที่เลือก
 if executor_type in ["shared-iterations", "per-vu-iterations"]:
     iterations = st.number_input("Total Requests / Iterations Target", min_value=1, value=200)
     duration = None
@@ -49,6 +45,7 @@ if st.button("ทดสอบ"):
     
     with st.spinner("AI กำลังสร้าง Script, Review และสั่งรัน K6..."):
         try:
+            # ยิง Request ไปที่ /run-test
             response = requests.post(f"{BACKEND_URL}/run-test", json=payload, timeout=120)
             if response.status_code == 200:
                 st.success("ทดสอบเรียบร้อย!")
