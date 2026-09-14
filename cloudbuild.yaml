@@ -13,7 +13,7 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - 'speedtest-backend' # ชื่อ Cloud Run Service ของ Backend
+      - 'speedtest-backend'
       - '--image=gcr.io/$PROJECT_ID/speedtest-backend'
       - '--region=asia-southeast1'
       - '--allow-unauthenticated'
@@ -32,7 +32,7 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - 'speedtest-ui' # ชื่อ Cloud Run Service ของ UI
+      - 'speedtest-ui'
       - '--image=gcr.io/$PROJECT_ID/speedtest-ui'
       - '--port=8501'
       - '--set-env-vars=BACKEND_URL=https://speedtestai-git-349863046910.asia-southeast1.run.app'
@@ -42,3 +42,7 @@ steps:
 images:
   - 'gcr.io/$PROJECT_ID/speedtest-backend'
   - 'gcr.io/$PROJECT_ID/speedtest-ui'
+
+# ✅ ป้องกัน Error เรื่อง Service Account logs
+options:
+  logging: CLOUD_LOGGING_ONLY
