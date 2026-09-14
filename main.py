@@ -8,6 +8,18 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://speedtest-ui-349863046910.asia-southeast1.run.app"], # หรือระบุ URL หน้า UI บน Cloud Run เพื่อความปลอดภัย
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app = FastAPI()
 
