@@ -15,7 +15,7 @@ steps:
       - 'deploy'
       - 'speedtest-backend'
       - '--image=gcr.io/$PROJECT_ID/speedtest-backend'
-      - '--set-env-vars=GCS_BUCKET_NAME=speedtest-artifacts-bucket'
+      - '--update-env-vars=GCS_BUCKET_NAME=speedtest-artifacts-bucket'
       - '--region=asia-southeast1'
       - '--allow-unauthenticated'
 

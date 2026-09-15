@@ -181,16 +181,10 @@ async def run_performance_test(req: PerformanceTestRequest):
         if not os.path.exists(summary_path):
             raise HTTPException(status_code=500, detail=f"k6 finished but no summary created. Output: {process.stdout}")
 
-        # STEP 5: Parse Results & Return UI Payload
-        with open(summary_path, "r", encoding="utf-8") as f:
-            metrics_data = json.load(f)
-
-        metrics = metrics_data.get("metrics", {})
-        http_reqs_data = metrics.get("http_reqs", {})
-        http_reqs_vals = http_reqs_data.get("values", http_reqs_data) if isinstance(http_reqs_data, dict) else {}
-
-        duration_data = metrics.get("http_req_duration", {})
-        duration_vals = duration_data.get("values", duration_data) if isinstance(duration_data, dict) else {}
+        # STEP 5: Upload Files to GCS & Return UI Payload
+        script_gcs = upload_to_gcs(script_path, f"scripts/test_script_{timestamp}.js")
+        review_gcs = upload_to_gcs(review_path, f"reviews/review_{timestamp}.md")
+        summary_gcs = upload_to_gcs(summary_path, f"summaries/summary_{timestamp}.json")
 
         summary_result = {
             "status": "Success",
@@ -199,7 +193,7 @@ async def run_performance_test(req: PerformanceTestRequest):
             "total_requests": int(http_reqs_vals.get("count", 0)),
             "rps": round(float(http_reqs_vals.get("rate", 0)), 2),
             "avg_response_time_ms": round(float(duration_vals.get("avg", 0)), 2),
-            "p95_response_time_ms": round(float(duration_vals.get("p(95)", duration_vals.get("pt(95)", 0))), 2)
+            "p95_response_time_ms": round(float(duration_vals.get("p(95)", duration_vals.get("pt(95)", 0))), 2),
         }
         return summary_result
 
