@@ -11,7 +11,7 @@ services:
       - POSTGRES_PASSWORD=mysecretpassword
       - POSTGRES_DB=speedtest_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -28,8 +28,6 @@ services:
       - GCS_BUCKET_NAME=speedtest-artifacts-bucket
       - STORAGE_TYPE=local
       - LOCAL_STORAGE_DIR=/app
-      # ✅ กำหนดค่าเฉพาะใน Local
-      - DATABASE_URL=postgresql://postgres:mysecretpassword@postgres-db:5432/speedtest_db
     ports:
       - "8080:8080"
     env_file:
