@@ -36,7 +36,7 @@ steps:
       - 'speedtest-ui'
       - '--image=gcr.io/$PROJECT_ID/speedtest-ui'
       - '--port=8501'
-      - '--set-env-vars=BACKEND_URL=https://speedtestai-git-349863046910.asia-southeast1.run.app'
+      - '--set-env-vars=BACKEND_URL=https://speedtest-backend-349863046910.asia-southeast1.run.app'
       - '--region=asia-southeast1'
       - '--allow-unauthenticated'
 
