@@ -10,6 +10,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from fastapi.middleware.cors import CORSMiddleware
 from google.cloud import storage
+from database import SessionLocal, TestResult
 
 # ✅ สร้าง App ครั้งเดียวพร้อมตั้งค่า CORS
 app = FastAPI()
@@ -195,7 +196,7 @@ async def run_performance_test(req: PerformanceTestRequest):
         upload_to_gcs(script_path, f"scripts/test_script_{timestamp}.js")
         upload_to_gcs(review_path, f"reviews/review_{timestamp}.md")
         upload_to_gcs(summary_path, f"summaries/summary_{timestamp}.json")
-        
+
         summary_result = {
             "status": "Success",
             "target_url": req.url,

@@ -1,12 +1,35 @@
 services:
+  # ----------------------------------------------------
+  # 1. DATABASE (สำหรับใช้งานบน Local)
+  # ----------------------------------------------------
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: k6-postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_DB=speedtest_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # ----------------------------------------------------
+  # 2. BACKEND
+  # ----------------------------------------------------
   fastapi-backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
     container_name: k6-backend
     environment:
-    - TZ=Asia/Bangkok
-    - GCS_BUCKET_NAME=speedtest-artifacts-bucket
+      - TZ=Asia/Bangkok
+      - GCS_BUCKET_NAME=speedtest-artifacts-bucket
+      - STORAGE_TYPE=local
+      - LOCAL_STORAGE_DIR=/app
+      # ✅ กำหนดค่าเฉพาะใน Local
+      - DATABASE_URL=postgresql://postgres:mysecretpassword@postgres-db:5432/speedtest_db
     ports:
       - "8080:8080"
     env_file:
@@ -15,7 +38,12 @@ services:
       - scripts_data:/app/scripts
       - summaries_data:/app/summaries
       - reviews_data:/app/reviews
+    depends_on:
+      - postgres-db
 
+  # ----------------------------------------------------
+  # 3. FRONTEND
+  # ----------------------------------------------------
   streamlit-frontend:
     build:
       context: .
@@ -24,13 +52,12 @@ services:
     ports:
       - "8501:8501"
     environment:
-      # ✅ เหลือไว้เฉพาะ Base URL (ไม่มี /run-test ต่อท้าย)
       - BACKEND_URL=https://speedtest-backend-349863046910.asia-southeast1.run.app
     depends_on:
       - fastapi-backend
-# ประกาศ Named Volumes ให้ Docker สร้างและจัดการพื้นที่ให้
+
 volumes:
   scripts_data:
   summaries_data:
   reviews_data:
-      
+  postgres_data:
