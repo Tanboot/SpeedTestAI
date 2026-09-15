@@ -8,23 +8,22 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
-from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# ✅ สร้าง App ครั้งเดียวพร้อมตั้งค่า CORS
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://speedtest-ui-349863046910.asia-southeast1.run.app"], # หรือระบุ URL หน้า UI บน Cloud Run เพื่อความปลอดภัย
+    allow_origins=["*"],  # หรือระบุ URL Streamlit UI บน Cloud Run
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app = FastAPI()
-
+# ✅ อัปเดตชื่อโมเดล Gemini เป็นเวอร์ชันปัจจุบัน
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3.6-flash",
+    model="gemini-2.5-flash",
     temperature=0,
     google_api_key=os.getenv("GOOGLE_API_KEY")
 )
@@ -90,6 +89,11 @@ def extract_text_content(content) -> str:
     else:
         return str(content)
 
+@app.get("/")
+async def health_check():
+    """✅ เพิ่ม Health check endpoint ให้ Cloud Run ตรวจสอบสถานะง่ายขึ้น"""
+    return {"status": "ok"}
+
 @app.post("/run-test")
 async def run_performance_test(req: PerformanceTestRequest):
     api_key = os.getenv("GOOGLE_API_KEY")
@@ -97,7 +101,7 @@ async def run_performance_test(req: PerformanceTestRequest):
         raise HTTPException(status_code=500, detail="GOOGLE_API_KEY environment variable is not set")
 
     try:
-        # STEP 1: ส่ง executor และ iterations เข้าไปใน Prompt
+        # STEP 1: AI Agent 1 - Generate K6 Script
         gen_prompt = ChatPromptTemplate.from_template(K6_GENERATOR_PROMPT)
         gen_chain = gen_prompt | llm
         ai_gen_response = gen_chain.invoke({
@@ -113,9 +117,7 @@ async def run_performance_test(req: PerformanceTestRequest):
         if "\\n" in k6_script:
             k6_script = k6_script.replace("\\n", "\n")
 
-        # -------------------------------------------------------------
         # STEP 2: AI Agent 2 - Review Code against Best Practices
-        # -------------------------------------------------------------
         review_prompt = ChatPromptTemplate.from_template(K6_REVIEWER_PROMPT)
         review_chain = review_prompt | llm
         ai_review_response = review_chain.invoke({"script": k6_script})
@@ -125,9 +127,7 @@ async def run_performance_test(req: PerformanceTestRequest):
         if "\\n" in review_md_content:
             review_md_content = review_md_content.replace("\\n", "\n")
 
-        # -------------------------------------------------------------
         # STEP 3: Setup Folders & Save Files
-        # -------------------------------------------------------------
         os.makedirs("scripts", exist_ok=True)
         os.makedirs("summaries", exist_ok=True)
         os.makedirs("reviews", exist_ok=True)
@@ -135,13 +135,11 @@ async def run_performance_test(req: PerformanceTestRequest):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         script_path = f"scripts/test_script_{timestamp}.js"
         summary_path = f"summaries/summary_{timestamp}.json"
-        review_path = f"reviews/review_{timestamp}.md"  # บันทึกเป็นไฟล์ .md
+        review_path = f"reviews/review_{timestamp}.md"
 
-        # บันทึก K6 Script
         with open(script_path, "w", encoding="utf-8") as f:
             f.write(k6_script)
 
-        # บันทึก Review Report สวยๆ เป็น Markdown
         report_header = f"""# 🔍 K6 Code Review Report
 - **Timestamp:** {timestamp}
 - **Target URL:** {req.url}
@@ -153,9 +151,7 @@ async def run_performance_test(req: PerformanceTestRequest):
         with open(review_path, "w", encoding="utf-8") as f:
             f.write(report_header + review_md_content)
 
-        # -------------------------------------------------------------
         # STEP 4: Run K6 Execution
-        # -------------------------------------------------------------
         cmd = [
             "k6", "run",
             "--summary-export", summary_path,
@@ -170,9 +166,7 @@ async def run_performance_test(req: PerformanceTestRequest):
         if not os.path.exists(summary_path):
             raise HTTPException(status_code=500, detail=f"k6 finished but no summary created. Output: {process.stdout}")
 
-        # -------------------------------------------------------------
         # STEP 5: Parse Results & Return UI Payload
-        # -------------------------------------------------------------
         with open(summary_path, "r", encoding="utf-8") as f:
             metrics_data = json.load(f)
 
@@ -196,32 +190,3 @@ async def run_performance_test(req: PerformanceTestRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-def send_ms_teams_notification(webhook_url: str, data: dict):
-    card_payload = {
-        "type": "message",
-        "attachments": [{
-            "contentType": "application/vnd.microsoft.card.adaptive",
-            "content": {
-                "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                "type": "AdaptiveCard",
-                "version": "1.4",
-                "body": [
-                    {"type": "TextBlock", "text": "🚀 K6 Performance Test Result", "weight": "Bolder", "size": "Large"},
-                    {"type": "FactSet", "facts": [
-                        {"title": "Target URL:", "value": data["target_url"]},
-                        {"title": "Script File:", "value": data.get("script_file", "")},
-                        {"title": "Summary File:", "value": data.get("summary_file", "")},
-                        {"title": "Review Report:", "value": data.get("review_file", "")},
-                        {"title": "Total Requests:", "value": str(data["total_requests"])},
-                        {"title": "RPS:", "value": str(data["rps"])},
-                        {"title": "Avg Response Time:", "value": f"{data['avg_response_time_ms']} ms"}
-                    ]}
-                ]
-            }
-        }]
-    }
-    try:
-        requests.post(webhook_url, json=card_payload)
-    except Exception:
-        pass
