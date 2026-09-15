@@ -6,6 +6,7 @@ services:
     container_name: k6-backend
     environment:
     - TZ=Asia/Bangkok
+    - GCS_BUCKET_NAME=speedtest-artifacts-bucket
     ports:
       - "8080:8080"
     env_file:
