@@ -39,7 +39,7 @@ def upload_to_gcs(local_file_path: str, destination_blob_name: str):
 
 # ✅ อัปเดตชื่อโมเดล Gemini เป็นเวอร์ชันปัจจุบัน
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3.6-flash",
+    model="gemini-3.5-flash",
     temperature=0,
     google_api_key=os.getenv("GOOGLE_API_KEY")
 )
