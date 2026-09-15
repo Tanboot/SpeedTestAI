@@ -46,7 +46,7 @@ if st.button("ทดสอบ"):
     with st.spinner("AI กำลังสร้าง Script, Review และสั่งรัน K6..."):
         try:
             # ยิง Request ไปที่ /run-test
-            response = requests.post(f"{BACKEND_URL}/run-test", json=payload, timeout=120)
+            response = requests.post(f"{BACKEND_URL}/run-test", json=payload, timeout=300)
             if response.status_code == 200:
                 st.success("ทดสอบเรียบร้อย!")
                 st.json(response.json())
