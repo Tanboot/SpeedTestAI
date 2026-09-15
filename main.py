@@ -193,9 +193,8 @@ async def run_performance_test(req: PerformanceTestRequest):
         duration_vals = duration_data.get("values", duration_data) if isinstance(duration_data, dict) else {}
 
         # หลังจากคำนวณ summary_result เสร็จแล้ว ก่อนบรรทัด return summary_result ให้เพิ่ม:
-        try:
-            db = SessionLocal()
-            db_result = TestResult(
+        db = SessionLocal()
+        db_result = TestResult(
                 target_url=req.url,
                 executor=req.executor,
                 vus=req.vus,
@@ -204,12 +203,10 @@ async def run_performance_test(req: PerformanceTestRequest):
                 avg_response_time_ms=round(float(duration_vals.get("avg", 0)), 2),
                 p95_response_time_ms=round(float(duration_vals.get("p(95)", duration_vals.get("pt(95)", 0))), 2)
             )
-            db.add(db_result)
-            db.commit()
-            db.refresh(db_result)
-            db.close()
-        except Exception as db_err:
-            print(f"Failed to save result to database: {db_err}")
+        db.add(db_result)
+        db.commit()
+        db.refresh(db_result)
+        db.close()
 
         # STEP 6: Upload Files silently to GCS (อัปโหลดลง GCS เบื้องหลัง)
         upload_to_gcs(script_path, f"scripts/test_script_{timestamp}.js")
