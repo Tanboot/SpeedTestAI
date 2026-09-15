@@ -5,3 +5,4 @@ requests
 streamlit
 pydantic
 langchain-google-genai
+google-cloud-storage
