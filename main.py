@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from fastapi.middleware.cors import CORSMiddleware
+from google.cloud import storage
 
 # ✅ สร้าง App ครั้งเดียวพร้อมตั้งค่า CORS
 app = FastAPI()
@@ -20,6 +21,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ✅ กำหนดชื่อ GCS Bucket จาก Environment Variable
+GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "speedtest-artifacts-bucket")
+def upload_to_gcs(local_file_path: str, destination_blob_name: str):
+    """อัปโหลดไฟล์จาก Local ชั่วคราวขึ้น GCS Bucket"""
+    try:
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(GCS_BUCKET_NAME)
+        blob = bucket.blob(destination_blob_name)
+        blob.upload_from_filename(local_file_path)
+        return f"gs://{GCS_BUCKET_NAME}/{destination_blob_name}"
+    except Exception as e:
+        print(f"Failed to upload {local_file_path} to GCS: {e}")
+        return None
 
 # ✅ อัปเดตชื่อโมเดล Gemini เป็นเวอร์ชันปัจจุบัน
 llm = ChatGoogleGenerativeAI(
