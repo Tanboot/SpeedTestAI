@@ -182,10 +182,20 @@ async def run_performance_test(req: PerformanceTestRequest):
             raise HTTPException(status_code=500, detail=f"k6 finished but no summary created. Output: {process.stdout}")
 
         # STEP 5: Upload Files to GCS & Return UI Payload
-        script_gcs = upload_to_gcs(script_path, f"scripts/test_script_{timestamp}.js")
-        review_gcs = upload_to_gcs(review_path, f"reviews/review_{timestamp}.md")
-        summary_gcs = upload_to_gcs(summary_path, f"summaries/summary_{timestamp}.json")
+        with open(summary_path, "r", encoding="utf-8") as f:
+            metrics_data = json.load(f)
+        metrics = metrics_data.get("metrics", {})
+        http_reqs_data = metrics.get("http_reqs", {})
+        http_reqs_vals = http_reqs_data.get("values", http_reqs_data) if isinstance(http_reqs_data, dict) else {}
 
+        duration_data = metrics.get("http_req_duration", {})
+        duration_vals = duration_data.get("values", duration_data) if isinstance(duration_data, dict) else {}
+
+        # STEP 6: Upload Files silently to GCS (อัปโหลดลง GCS เบื้องหลัง)
+        upload_to_gcs(script_path, f"scripts/test_script_{timestamp}.js")
+        upload_to_gcs(review_path, f"reviews/review_{timestamp}.md")
+        upload_to_gcs(summary_path, f"summaries/summary_{timestamp}.json")
+        
         summary_result = {
             "status": "Success",
             "target_url": req.url,
