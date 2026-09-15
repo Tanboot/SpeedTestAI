@@ -24,7 +24,7 @@ services:
       - "8501:8501"
     environment:
       # ✅ เหลือไว้เฉพาะ Base URL (ไม่มี /run-test ต่อท้าย)
-      - BACKEND_URL=https://speedtestai-git-349863046910.asia-southeast1.run.app
+      - BACKEND_URL=https://speedtest-backend-349863046910.asia-southeast1.run.app
     depends_on:
       - fastapi-backend
 # ประกาศ Named Volumes ให้ Docker สร้างและจัดการพื้นที่ให้

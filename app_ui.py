@@ -4,7 +4,7 @@ import requests
 import os
 
 # ดึงค่า Base URL และตัด / ท้ายสุดออกหากมี
-BACKEND_URL = os.getenv("BACKEND_URL", "https://speedtestai-git-349863046910.asia-southeast1.run.app").rstrip("/")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://speedtest-backend-349863046910.asia-southeast1.run.app").rstrip("/")
 
 st.set_page_config(
     page_title="AI Performance Test",
