@@ -187,8 +187,9 @@ async def run_performance_test(req: PerformanceTestRequest):
             metrics_data = json.load(f)
         
         metrics = metrics_data.get("metrics", {})
-        http_reqs_vals = metrics.get("http_reqs", {}).get("values", {})
-        duration_vals = metrics.get("http_req_duration", {}).get("values", {})
+
+        http_reqs_vals = metrics.get("http_reqs", {})
+        duration_vals = metrics.get("http_req_duration", {})
 
         # บันทึกลง PostgreSQL Database
         if SessionLocal:
