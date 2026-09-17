@@ -50,7 +50,7 @@ services:
     ports:
       - "8501:8501"
     environment:
-      - BACKEND_URL=https://speedtest-backend-349863046910.asia-southeast1.run.app
+      - BACKEND_URL=http://fastapi-backend:8080
     depends_on:
       - fastapi-backend
 
