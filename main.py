@@ -39,7 +39,7 @@ def upload_to_gcs(local_file_path: str, destination_blob_name: str):
 
 # ✅ อัปเดตชื่อโมเดล Gemini เป็นเวอร์ชันปัจจุบัน
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3.5-flash",
+    model="gemini-3.5-flash-lite",
     temperature=0,
     google_api_key=os.getenv("GOOGLE_API_KEY")
 )
@@ -182,31 +182,37 @@ async def run_performance_test(req: PerformanceTestRequest):
         if not os.path.exists(summary_path):
             raise HTTPException(status_code=500, detail=f"k6 finished but no summary created. Output: {process.stdout}")
 
-        # STEP 5: Upload Files to GCS & Return UI Payload
+        # STEP 5: Parse K6 Summary & Save to Database
         with open(summary_path, "r", encoding="utf-8") as f:
             metrics_data = json.load(f)
+        
         metrics = metrics_data.get("metrics", {})
-        http_reqs_data = metrics.get("http_reqs", {})
-        http_reqs_vals = http_reqs_data.get("values", http_reqs_data) if isinstance(http_reqs_data, dict) else {}
+        http_reqs_vals = metrics.get("http_reqs", {}).get("values", {})
+        duration_vals = metrics.get("http_req_duration", {}).get("values", {})
 
-        duration_data = metrics.get("http_req_duration", {})
-        duration_vals = duration_data.get("values", duration_data) if isinstance(duration_data, dict) else {}
-
-        # หลังจากคำนวณ summary_result เสร็จแล้ว ก่อนบรรทัด return summary_result ให้เพิ่ม:
-        db = SessionLocal()
-        db_result = TestResult(
-                target_url=req.url,
-                executor=req.executor,
-                vus=req.vus,
-                total_requests=int(http_reqs_vals.get("count", 0)),
-                rps=round(float(http_reqs_vals.get("rate", 0)), 2),
-                avg_response_time_ms=round(float(duration_vals.get("avg", 0)), 2),
-                p95_response_time_ms=round(float(duration_vals.get("p(95)", duration_vals.get("pt(95)", 0))), 2)
-            )
-        db.add(db_result)
-        db.commit()
-        db.refresh(db_result)
-        db.close()
+        # บันทึกลง PostgreSQL Database
+        if SessionLocal:
+            db = SessionLocal()
+            try:
+                db_result = TestResult(
+                    target_url=req.url,
+                    executor=req.executor,
+                    vus=req.vus,
+                    total_requests=int(http_reqs_vals.get("count", 0)),
+                    rps=round(float(http_reqs_vals.get("rate", 0)), 2),
+                    avg_response_time_ms=round(float(duration_vals.get("avg", 0)), 2),
+                    p95_response_time_ms=round(float(duration_vals.get("p(95)", 0)), 2)
+                )
+                db.add(db_result)
+                db.commit()
+                db.refresh(db_result)
+            except Exception as e:
+                print(f"Database error: {e}")
+                db.rollback()
+            finally:
+                db.close()
+        else:
+            print("⚠️ SessionLocal is not initialized. Skipping DB persist.")
 
         # STEP 6: Upload Files silently to GCS (อัปโหลดลง GCS เบื้องหลัง)
         upload_to_gcs(script_path, f"scripts/test_script_{timestamp}.js")
